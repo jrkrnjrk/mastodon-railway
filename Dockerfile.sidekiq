@@ -1,0 +1,12 @@
+# Mastodon Sidekiq worker for Railway
+FROM ghcr.io/mastodon/mastodon:v4.7.2
+
+USER root
+RUN mkdir -p /railway
+COPY scripts/common.sh scripts/sidekiq-entrypoint.sh /railway/
+RUN chmod 0755 /railway/common.sh /railway/sidekiq-entrypoint.sh \
+    && chown -R mastodon:mastodon /railway
+
+USER mastodon
+WORKDIR /opt/mastodon
+CMD ["/railway/sidekiq-entrypoint.sh"]

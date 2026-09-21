@@ -1,0 +1,88 @@
+# Local reference only. Railway does not run this file.
+# Images match the Railway Dockerfiles (Mastodon v4.7.2).
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: mastodon
+      POSTGRES_PASSWORD: mastodon
+      POSTGRES_DB: mastodon_production
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mastodon -d mastodon_production"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - redis-data:/data
+
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env.example
+    environment:
+      LOCAL_DOMAIN: localhost
+      LOCAL_HTTPS: "false"
+      DATABASE_URL: postgres://mastodon:mastodon@db:5432/mastodon_production
+      REDIS_URL: redis://redis:6379/0
+      PORT: "3000"
+    ports:
+      - "3000:3000"
+    volumes:
+      - media:/opt/mastodon/public/system
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  sidekiq:
+    build:
+      context: .
+      dockerfile: Dockerfile.sidekiq
+    env_file: .env.example
+    environment:
+      LOCAL_DOMAIN: localhost
+      LOCAL_HTTPS: "false"
+      DATABASE_URL: postgres://mastodon:mastodon@db:5432/mastodon_production
+      REDIS_URL: redis://redis:6379/0
+    volumes:
+      - media:/opt/mastodon/public/system
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+  streaming:
+    build:
+      context: .
+      dockerfile: Dockerfile.streaming
+    environment:
+      LOCAL_DOMAIN: localhost
+      DATABASE_URL: postgres://mastodon:mastodon@db:5432/mastodon_production
+      REDIS_URL: redis://redis:6379/0
+      PORT: "4000"
+    ports:
+      - "4000:4000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+volumes:
+  postgres-data:
+  redis-data:
+  media:

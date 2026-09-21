@@ -1,0 +1,10 @@
+.git
+.gitignore
+*.md
+docs
+.env
+.env.*
+!.env.example
+public/system
+**/.DS_Store
+*.zip

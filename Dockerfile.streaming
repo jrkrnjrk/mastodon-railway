@@ -1,0 +1,13 @@
+# Mastodon streaming API for Railway
+# Official image: https://github.com/mastodon/mastodon/pkgs/container/mastodon-streaming
+FROM ghcr.io/mastodon/mastodon-streaming:v4.7.2
+
+USER root
+RUN mkdir -p /railway
+COPY scripts/streaming-entrypoint.sh /railway/streaming-entrypoint.sh
+RUN chmod 0755 /railway/streaming-entrypoint.sh
+
+USER mastodon
+WORKDIR /opt/mastodon
+EXPOSE 4000
+CMD ["/railway/streaming-entrypoint.sh"]

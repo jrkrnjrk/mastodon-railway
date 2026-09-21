@@ -1,0 +1,6 @@
+.env
+.env.production
+.env.local
+public/system
+*.zip
+.DS_Store
